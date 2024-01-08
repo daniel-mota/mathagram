@@ -47,12 +47,22 @@ let expressionContainer;
 let termsContainer;
 
 
-document.addEventListener("DOMContentLoaded", function () {
+function deleteExpression() {
+    while (expressionContainer.firstChild) {
+        expressionContainer.removeChild(expressionContainer.firstChild);
+    }
+    while (termsContainer.firstChild) {
+        termsContainer.removeChild(termsContainer.firstChild);
+    }
+}
+
+function loadExpression() {
     const mathagramContainer = document.getElementById("mathagram");
     expressionContainer = document.getElementById("expression");
     termsContainer = document.getElementById("terms");
 
     const mathagram = createMathagram(2);
+    console.log("mathagram", mathagram)
     const terms = mathagram.split(/\s+/);
 
     // Display mathagram boxes at the bottom
@@ -77,10 +87,14 @@ document.addEventListener("DOMContentLoaded", function () {
         // expressionContainer.appendChild(emptyCell);
 
     });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+
 
     // create equal sign
     // expressionContainer[expressionContainer.length - 2].term = '=';
-
+    loadExpression();
     // Handle drag and drop for terms
     termsContainer.addEventListener("dragstart", handleDragStart);
     expressionContainer.addEventListener("dragover", handleDragOver);
@@ -89,9 +103,56 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function checkExpression() {
     let s = "";
-    Array.from(expressionContainer.childNodes).forEach((term, index) => {
-        // console.log(term);
+    let res = "";
+    let check_res = false;
+    let works = true;
+    // console.log("checking expression");
+    Array.from(expressionContainer.childNodes).forEach((node, index) => {
+        // console.log(node.childNodes);
+        if (node.childNodes.length === 0) {
+            // check if equal sign
+            works = false;
+        } else if (node.childNodes > 1) {
+            // input validation
+            works = false
+        } else {
+            let to_print;
+            if (node.childNodes[0].dataset === undefined) {
+                to_print = node.childNodes[0].data;
+            } else {
+                to_print = node.childNodes[0].dataset.value;
+            }
+            if (to_print == "=") {
+                check_res = true;
+            } else if (check_res) {
+                res = to_print;
+            } else {
+                s += to_print + " ";
+            }
+            // console.log("value ", to_print);
+        }
+        // 
     });
+    // console.log("works", works)
+    // console.log("s", s);
+    // res = parseInt(res)
+    // console.log("res", res)
+    // check validity of expression
+    if (!works) return false;
+
+    try {
+        expr = eval(s)
+        if (expr == res) {
+            works = true
+        } else works = false;
+    } catch {
+        works = false;
+    }
+
+    if (works) {
+        deleteExpression();
+        loadExpression();
+    }
 }
 
 function createBox(term, index) {
@@ -125,8 +186,11 @@ function handleDrop(event) {
     event.preventDefault();
     const data = event.dataTransfer.getData("text/plain");
     const draggedBox = document.querySelector(`[data-index="${data}"]`);
+    let term = draggedBox.dataset.value
+    // draggedBox.
 
-    console.log("data", data)
+    // console.log("data", data)
+    // console.log("term", term)
     // console.log("draggedBox", draggedBox)
 
     // Check if the drop target is an empty cell
@@ -139,6 +203,7 @@ function handleDrop(event) {
 
         // Disable further dragging
         draggedBox.draggable = false;
+        // console.log("checkexpr res", checkExpression());
         checkExpression();
     }
 }
